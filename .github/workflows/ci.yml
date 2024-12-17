@@ -3,24 +3,24 @@ name: Build and Deploy to Docker Swarm
 on:
   push:
     branches:
-      - main
+      - main  # Деплой будет запускаться на каждое обновление ветки `main`
   pull_request:
     branches:
       - main
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Запускать на Ubuntu
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2  # Клонирование вашего репозитория
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v1  # Подготовка для сборки Docker
 
       - name: Cache Docker layers
-        uses: actions/cache@v2
+        uses: actions/cache@v2  # Кэширование слоёв Docker
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -29,14 +29,15 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t niaspo_kp:latest .
+          docker build -t niaspo_kp:latest .  # Сборка Docker-образа
 
       - name: Push image to Docker Hub
         run: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
           docker tag niaspo_kp:latest ${{ secrets.DOCKER_USERNAME }}/niaspo_kp:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/niaspo_kp:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/niaspo_kp:latest  # Отправка образа на Docker Hub
 
       - name: Deploy to Docker Swarm
         run: |
           ssh -i ${{ secrets.DEPLOY_KEY }} user@yourserver "docker pull ${{ secrets.DOCKER_USERNAME }}/niaspo_kp:latest && docker stack deploy -c docker-compose.yml my_stack"
+          # Подключение по SSH на сервер, получение нового образа и деплой через Docker Swarm
