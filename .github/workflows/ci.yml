@@ -33,9 +33,9 @@ jobs:
 
       - name: Push image to Docker Hub
         run: |
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          docker tag niaspo_kp:latest ${{ secrets.DOCKER_USERNAME }}/niaspo_kp:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/niaspo_kp:latest  # Отправка образа на Docker Hub
+           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker-compose -f docker-compose.yml build  # Сборка всех сервисов
+          docker-compose -f docker-compose.yml push   # Отправка всех образов на Docker Hub
 
       - name: Deploy to Docker Swarm
         run: |
