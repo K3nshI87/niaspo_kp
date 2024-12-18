@@ -3,7 +3,7 @@ name: Build and Deploy to Docker Swarm
 on:
   push:
     branches:
-      - master  # Деплой будет запускаться на каждое обновление ветки `main`
+      - master  # Деплой будет запускаться на каждое обновление ветки `master`
   pull_request:
     branches:
       - master
@@ -27,11 +27,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      - name: Build Docker image
-        run: |
-          docker build -t niaspo_kp:latest .  # Сборка Docker-образа
-
-      - name: Push image to Docker Hub
+      - name: Build and Push Docker Images
         run: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
           docker-compose -f docker-compose.yml build  # Сборка всех сервисов
@@ -39,5 +35,5 @@ jobs:
 
       - name: Deploy to Docker Swarm
         run: |
-          ssh -i ${{ secrets.DEPLOY_KEY }} user@yourserver "docker pull ${{ secrets.DOCKER_USERNAME }}/niaspo_kp:latest && docker stack deploy -c docker-compose.yml my_stack"
+          ssh -i ${{ secrets.DEPLOY_KEY }} user@yourserver "docker stack deploy -c docker-compose.yml my_stack"
           # Подключение по SSH на сервер, получение нового образа и деплой через Docker Swarm
