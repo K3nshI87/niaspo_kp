@@ -1,26 +1,48 @@
 version: '3'
+
 services:
   frontend:
-    image: yourdockerusername/frontend:latest
+    build:
+      context: ./frontend  # Собираем контейнер из папки с фронтендом
+    image: yourdockerusername/frontend:latest  # Собственная версия образа фронтенда
     ports:
-      - "8080:80"
+      - "8080:80"  # Маппинг портов
+    restart: always
+    networks:
+      - my_network  # Сеть для связи между контейнерами
+
   backend:
-    image: yourdockerusername/backend:latest
+    build:
+      context: ./backend  # Собираем контейнер из папки с сервером (backend)
+    image: yourdockerusername/backend:latest  # Собственная версия образа бэкенда
     ports:
-      - "5000:5000"
+      - "5000:5000"  # Маппинг портов для API
     environment:
       POSTGRES_HOST: db
       POSTGRES_DB: policy_db
       POSTGRES_USER: postgres_user
       POSTGRES_PASSWORD: postgres_password
+    depends_on:
+      - db  # Обеспечиваем, что база данных будет готова перед стартом бэкенда
+    restart: always
+    networks:
+      - my_network  # Сеть для связи между контейнерами
+
   db:
-    image: postgres:latest
+    image: postgres:latest  # Используем официальный образ PostgreSQL
     environment:
       POSTGRES_USER: postgres_user
       POSTGRES_PASSWORD: postgres_password
       POSTGRES_DB: policy_db
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data  # Данные сохраняются в volume
+    restart: always
+    networks:
+      - my_network  # Сеть для связи между контейнерами
+
+networks:
+  my_network:  # Описание сети для контейнеров
 
 volumes:
-  postgres_data:
+  postgres_data:  # Тома для постоянных данных Postgres
+
