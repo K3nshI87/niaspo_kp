@@ -3,10 +3,10 @@ name: Build and Deploy to Docker Swarm
 on:
   push:
     branches:
-      - main  # Деплой будет запускаться на каждое обновление ветки `main`
+      - master  # Деплой будет запускаться на каждое обновление ветки `main`
   pull_request:
     branches:
-      - main
+      - master
 
 jobs:
   build:
