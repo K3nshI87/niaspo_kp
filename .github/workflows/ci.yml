@@ -44,13 +44,13 @@ jobs:
 
       - name: Deploy to Docker Swarm
         run: |
-          # Сохраняем секретный ключ в файл
+          # Сохраняем приватный ключ для SSH-соединения
           echo "${{ secrets.DEPLOY_KEY }}" > deploy_key.pem
-          chmod 600 deploy_key.pem  # Изменяем права для приватного ключа, чтобы он был доступен только для чтения владельцу
+          chmod 600 deploy_key.pem  # Устанавливаем права доступа
 
-          # Выполняем команду ssh с правильными аргументами
-          ssh -i deploy_key.pem -o StrictHostKeyChecking=no user@yourserver \
-            "docker pull ${{ secrets.DOCKER_USERNAME }}/niaspo_kp:latest && docker stack deploy -c docker-compose.yml my_stack"
+          # Выполнение деплоя на сервере Docker Swarm
+          ssh -i deploy_key.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null user@${{ secrets.SERVER_IP }} \
+            "docker pull ${DOCKER_USERNAME}/niaspo_kp:latest && docker stack deploy -c docker-compose.yml my_stack"
 
-          # Удаляем временный ключ для безопасности
+          # Удаляем временный ключ
           rm deploy_key.pem
