@@ -1,26 +1,56 @@
-version: '3'
-services:
-  frontend:
-    image: yourdockerusername/frontend:latest
-    ports:
-      - "8080:80"
-  backend:
-    image: yourdockerusername/backend:latest
-    ports:
-      - "5000:5000"
-    environment:
-      POSTGRES_HOST: db
-      POSTGRES_DB: policy_db
-      POSTGRES_USER: postgres_user
-      POSTGRES_PASSWORD: postgres_password
-  db:
-    image: postgres:latest
-    environment:
-      POSTGRES_USER: postgres_user
-      POSTGRES_PASSWORD: postgres_password
-      POSTGRES_DB: policy_db
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+name: Build and Deploy to Docker Swarm
 
-volumes:
-  postgres_data:
+on:
+  push:
+    branches:
+      - master  # Деплой будет запускаться на каждое обновление ветки `master`
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Запускать на Ubuntu
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2  # Клонирование вашего репозитория
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1  # Подготовка для сборки Docker
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2  # Кэширование слоёв Docker
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Install Docker Compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose --version  # Проверка установки docker-compose
+
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build and Push Docker Images
+        run: |
+          docker-compose -f docker-compose.yml build  # Сборка всех сервисов
+          docker-compose -f docker-compose.yml push   # Отправка всех образов на Docker Hub
+
+      - name: Deploy to Docker Swarm
+        run: |
+          # Сохраняем секретный ключ в файл
+          echo "${{ secrets.DEPLOY_KEY }}" > deploy_key.pem
+          chmod 600 deploy_key.pem  # Изменяем права для приватного ключа, чтобы он был доступен только для чтения владельцу
+
+          # Выполняем команду ssh с правильными аргументами
+          ssh -i deploy_key.pem -o StrictHostKeyChecking=no user@yourserver \
+            "docker pull ${{ secrets.DOCKER_USERNAME }}/niaspo_kp:latest && docker stack deploy -c docker-compose.yml my_stack"
+
+          # Удаляем временный ключ для безопасности
+          rm deploy_key.pem
