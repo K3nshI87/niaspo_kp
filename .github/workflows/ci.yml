@@ -3,37 +3,47 @@ name: Local Build and Deploy
 on:
   push:
     branches:
-      - master
+      - master  # Деплой будет запускаться на каждое обновление ветки `master`
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Выполнять на машине с Ubuntu
 
     steps:
+      # Шаг 1: Клонирование репозитория
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2  # Клонирование репозитория
 
+      # Шаг 2: Настройка Docker Buildx
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v1  # Подготовка для сборки Docker
 
+      # Шаг 3: Кэширование слоёв Docker
       - name: Cache Docker layers
-        uses: actions/cache@v2
+        uses: actions/cache@v2  # Кэширование слоёв
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
 
+      # Шаг 4: Установка Docker Compose
       - name: Install Docker Compose
         run: |
           sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
-          docker-compose --version
+          docker-compose --version  # Проверка установки
 
-      - name: Build and Push Docker Images
+      # Шаг 5: Сборка Docker образов
+      - name: Build Docker Images
         run: |
-          docker-compose -f docker-compose.yml build
+          docker-compose -f docker-compose.yml build  # Сборка всех сервисов
 
-      - name: Deploy to Localhost Swarm
+      # Шаг 6: Деплой в локальный Docker Swarm
+      - name: Deploy to Local Swarm
         run: |
+          # Убедитесь, что Docker Swarm был инициализирован локально (не требует удалённого подключения)
+          docker swarm init || echo "Docker Swarm уже инициализирован"
+
+          # Запуск деплоя на локальный Swarm
           docker stack deploy -c docker-compose.yml my_stack
