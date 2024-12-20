@@ -1,28 +1,29 @@
-version: '3'
+version: '3.8'  # Указываем последнюю версию схемы для лучшей совместимости
 
 services:
   frontend:
-    build:
-      context: ./frontend  # Указываем контекст для сборки
+    image: your-frontend-image:latest  # Замените на имя готового образа
     ports:
       - "8080:80"
+    networks:
+      - my_network
 
   backend:
-    build:
-      context: ./backend
+    image: your-backend-image:latest  # Замените на имя готового образа
     ports:
       - "5000:5000"
     depends_on:
-      - db  # Зависимость от базы данных PostgreSQL
+      - db
     environment:
-      - POSTGRES_HOST=db
-      - POSTGRES_DB=policy_db
-      - POSTGRES_USER=postgres_user
-      - POSTGRES_PASSWORD=postgres_password
+      POSTGRES_HOST: db
+      POSTGRES_DB: policy_db
+      POSTGRES_USER: postgres_user
+      POSTGRES_PASSWORD: postgres_password
+    networks:
+      - my_network
 
   db:
-    build:
-      context: ./database
+    image: postgres:13  # Используйте стабильный образ PostgreSQL
     ports:
       - "5432:5432"
     environment:
@@ -30,13 +31,14 @@ services:
       POSTGRES_PASSWORD: postgres_password
       POSTGRES_DB: policy_db
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # Данные сохраняются в volume
-    restart: always
+      - postgres_data:/var/lib/postgresql/data
     networks:
-      - my_network  # Сеть для связи между контейнерами
+      - my_network
 
 networks:
-  my_network:  # Описание сети для контейнеров
+  my_network:  # Описание сети для всех контейнеров
+    driver: overlay  # Используем overlay-сеть для Swarm
 
 volumes:
-  postgres_data:  # Тома для постоянных данных Postgres
+  postgres_data:
+    driver: local  # Используем локальный том для данных Postgres
