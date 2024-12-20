@@ -3,10 +3,10 @@ version: '3'
 services:
   frontend:
     build:
-    context: ./frontend
+      context: ./frontend  # Указываем контекст для сборки
     ports:
       - "8080:80"
-      
+
   backend:
     build:
       context: ./backend
