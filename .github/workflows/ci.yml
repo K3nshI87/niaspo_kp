@@ -1,26 +1,23 @@
-name: Build and Deploy to Docker Swarm
+name: Local Build and Deploy
 
 on:
   push:
     branches:
-      - master  # Деплой запускается на каждое обновление ветки `master`
-  pull_request:
-    branches:
       - master
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest  # Запускается на Ubuntu
+  build:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2  # Клонирование репозитория
+        uses: actions/checkout@v2
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1  # Подготовка для сборки Docker
+        uses: docker/setup-buildx-action@v1
 
       - name: Cache Docker layers
-        uses: actions/cache@v2  # Кэширование слоёв Docker
+        uses: actions/cache@v2
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -33,29 +30,10 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
           docker-compose --version
 
-      - name: Login to Docker Hub
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-        run: |
-          echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
-
       - name: Build and Push Docker Images
         run: |
-          docker-compose -f docker-compose.yml build  # Сборка контейнеров
-          docker-compose -f docker-compose.yml push   # Публикация образов в Docker Hub
+          docker-compose -f docker-compose.yml build
 
-      - name: Deploy to Docker Swarm
-        env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      - name: Deploy to Localhost Swarm
         run: |
-          # Сохранение приватного ключа для SSH
-          echo "${DEPLOY_KEY}" > deploy_key.pem
-          chmod 600 deploy_key.pem  # Установка необходимых прав
-
-          # Замена yourserver на реальный адрес вашего сервера
-          ssh -i deploy_key.pem -o StrictHostKeyChecking=no user@<ваш_адрес_сервера> \
-            "docker pull ${{ secrets.DOCKER_USERNAME }}/niaspo_kp:latest && docker stack deploy -c docker-compose.yml my_stack"
-
-          # Удаление временного ключа после деплоя
-          rm deploy_key.pem
+          docker stack deploy -c docker-compose.yml my_stack
