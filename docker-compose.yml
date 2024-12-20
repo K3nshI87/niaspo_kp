@@ -1,35 +1,27 @@
 version: "3.8"
 services:
   frontend:
-    image: $DOCKER_USERNAME/niaspo_kp_frontend:latest
+    build:
+      context: ./frontend
     ports:
       - "8080:80"
-    deploy:
-      replicas: 3
-      update_config:
-        parallelism: 1
-        delay: 10s
-      restart_policy:
-        condition: on-failure
-
+      
   backend:
-    image: $DOCKER_USERNAME/niaspo_kp_backend:latest
+    build:
+      context: ./backend
     ports:
       - "5000:5000"
     depends_on:
-      - db
+      - db  # Зависимость от базы данных PostgreSQL
     environment:
-      POSTGRES_HOST: db
-      POSTGRES_DB: policy_db
-      POSTGRES_USER: postgres_user
-      POSTGRES_PASSWORD: postgres_password
-    deploy:
-      replicas: 3
-      restart_policy:
-        condition: on-failure
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=policy_db
+      - POSTGRES_USER=postgres_user
+      - POSTGRES_PASSWORD=postgres_password
 
   db:
-    image: postgres:latest
+    build:
+      context: ./database
     ports:
       - "5432:5432"
     environment:
