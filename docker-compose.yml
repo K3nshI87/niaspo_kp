@@ -36,5 +36,3 @@ networks:
 volumes:
   postgres_data:
     driver: local
-
-    driver: local  # Используем локальный том для данных Postgres
